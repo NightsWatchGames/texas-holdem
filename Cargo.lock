@@ -2936,12 +2936,16 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_renet",
+ "serde_json",
  "texas-holdem-common",
 ]
 
 [[package]]
 name = "texas-holdem-common"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "texas-holdem-server"
@@ -2949,6 +2953,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_renet",
+ "serde_json",
  "texas-holdem-common",
 ]
 

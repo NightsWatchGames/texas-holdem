@@ -4,6 +4,17 @@ use bevy::prelude::*;
 use bevy_renet::{renet::{RenetClient, RenetConnectionConfig, ClientAuthentication}, RenetClientPlugin};
 use texas_holdem_common::PROTOCOL_ID;
 
+use crate::{network::{get_rooms}, table::{setup_table, setup_one_card}, room::RoomList};
+
+mod network;
+mod table;
+mod room;
+
+pub enum AppState {
+    Lobby,
+    Gaming,
+}
+
 fn new_renet_client() -> RenetClient {
     let server_addr = "127.0.0.1:5000".parse().unwrap();
     let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
@@ -20,25 +31,18 @@ fn new_renet_client() -> RenetClient {
 }
 
 fn main() {
-    println!("Hello world client!");
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(RenetClientPlugin::default())
         .insert_resource(new_renet_client())
-        .add_systems((send_testing_message, receive_message_system))
+        .insert_resource(RoomList(Vec::new()))
+        .add_systems((get_rooms, ))
+        .add_startup_systems((setup_table, setup_one_card, setup_camera))
         .run();
 }
 
-fn send_testing_message(mut client: ResMut<RenetClient>) {
-    let channel_id = 0;
-     // Send a text message to the server
-    client.send_message(channel_id, "client sending testing message".as_bytes().to_vec());
-}
-
-fn receive_message_system(mut client: ResMut<RenetClient>) {
-    let channel_id = 0;
-    while let Some(message) = client.receive_message(channel_id) {
-        // Handle received message
-        println!("Received message: {:?}", String::from_utf8(message));
-    }
+fn setup_camera(mut commands: Commands) {
+    let mut camera2d_bundle = Camera2dBundle::default();
+    camera2d_bundle.projection.scale = 2.5;
+    commands.spawn(camera2d_bundle);
 }

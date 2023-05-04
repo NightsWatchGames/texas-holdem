@@ -2,7 +2,13 @@ use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::prelude::*;
 use bevy_renet::{RenetServerPlugin, renet::{RenetServer, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}};
+use room::{Room, Player};
 use texas_holdem_common::PROTOCOL_ID;
+
+use crate::{network::{handle_events_system, handle_get_rooms}, room::RoomList};
+
+mod network;
+mod room;
 
 fn new_renet_server() -> RenetServer {
     let server_addr = "127.0.0.1:5000".parse().unwrap();
@@ -14,41 +20,24 @@ fn new_renet_server() -> RenetServer {
 }
 
 fn main() {
-    println!("Hello world server!");
+    let mock = Room {
+        room_id: 0,
+        room_name: "mock".to_string(),
+        room_password: "".to_string(),
+        owner_client_id: 0,
+        players: vec![Player {
+            player_client_id: 0,
+            player_name: "mock".to_string(),
+            player_role: room::PlayerRole::Participant,
+        }],
+    };
+    let room_list = RoomList(vec![mock]);
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(MinimalPlugins)
         .add_plugin(RenetServerPlugin::default())
         .insert_resource(new_renet_server())
-        .add_systems((send_testing_message, receive_message_system, handle_events_system))
+        // .insert_resource(RoomList(Vec::new()))
+        .insert_resource(room_list)
+        .add_systems((handle_get_rooms, handle_events_system))
         .run();
-}
-
-fn send_testing_message(mut server: ResMut<RenetServer>) {
-    let channel_id = 0;
-     // Send a text message for all clients
-    server.broadcast_message(channel_id, "server sending testing message".as_bytes().to_vec());
-}
-
-fn receive_message_system(mut server: ResMut<RenetServer>) {
-    let channel_id = 0;
-     // Send a text message for all clients
-    for client_id in server.clients_id().into_iter() {
-        while let Some(message) = server.receive_message(client_id, channel_id) {
-            // Handle received message
-            println!("Received message: {:?}", String::from_utf8(message));
-        }
-    }
-}
-
-fn handle_events_system(mut server_events: EventReader<ServerEvent>) {
-    for event in server_events.iter() {
-        match event {
-            ServerEvent::ClientConnected(id, user_data) => {
-                println!("Client {} connected", id);
-            }
-            ServerEvent::ClientDisconnected(id) => {
-                println!("Client {} disconnected", id);
-            }
-        }
-    }
 }
