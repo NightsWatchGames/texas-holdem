@@ -21,16 +21,18 @@ pub struct CreateRoomMessage {
     // req
     pub room_name: String,
     pub room_password: String,
+    pub player_name: String,
     // resp
-    pub room_id: u32,
+    pub room_id: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EnterRoomMessage {
     pub timestamp: u64,
     // req
-    pub room_id: u32,
+    pub room_id: u64,
     pub room_password: String,
-    pub user_name: String,
+    pub player_name: String,
     // resp
+    pub success: bool,
 }

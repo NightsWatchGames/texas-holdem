@@ -5,6 +5,7 @@ use bevy_renet::{
     renet::{RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig, ServerEvent},
     RenetServerPlugin,
 };
+use network::{handle_create_room, handle_enter_room};
 use room::{Player, Room};
 use texas_holdem_common::PROTOCOL_ID;
 
@@ -29,24 +30,16 @@ fn new_renet_server() -> RenetServer {
 }
 
 fn main() {
-    let mock = Room {
-        room_id: 0,
-        room_name: "mock".to_string(),
-        room_password: "".to_string(),
-        owner_client_id: 0,
-        players: vec![Player {
-            player_client_id: 0,
-            player_name: "mock".to_string(),
-            player_role: room::PlayerRole::Participant,
-        }],
-    };
-    let room_list = RoomList(vec![mock]);
     App::new()
         .add_plugins(MinimalPlugins)
         .add_plugin(RenetServerPlugin::default())
         .insert_resource(new_renet_server())
-        // .insert_resource(RoomList(Vec::new()))
-        .insert_resource(room_list)
-        .add_systems((handle_get_rooms, handle_events_system))
+        .insert_resource(RoomList(Vec::new()))
+        .add_systems((
+            handle_get_rooms,
+            handle_create_room,
+            handle_enter_room,
+            handle_events_system,
+        ))
         .run();
 }

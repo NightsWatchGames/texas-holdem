@@ -15,7 +15,7 @@ pub enum PlayerRole {
 
 #[derive(Debug)]
 pub struct Room {
-    pub room_id: u32,
+    pub room_id: u64,
     pub room_name: String,
     pub room_password: String,
     pub owner_client_id: u64,

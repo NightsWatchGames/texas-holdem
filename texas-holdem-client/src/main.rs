@@ -6,19 +6,22 @@ use bevy_renet::{
     renet::{ClientAuthentication, RenetClient, RenetConnectionConfig},
     RenetClientPlugin,
 };
-use texas_holdem_common::PROTOCOL_ID;
-use ui::{lobby_room_list_ui};
+use lobby::{
+    lobby_create_room_ui, lobby_room_list_ui, lobby_set_player_name_ui, CreateRoomEvent,
+    EnterRoomEvent, NewRoomSettings, PlayerName, RoomList,
+};
+use network::{create_room, enter_room};
+use texas_holdem_common::{util::timestamp, PROTOCOL_ID};
 
 use crate::{
     network::get_rooms,
-    room::RoomList,
     table::{setup_one_card, setup_table},
 };
 
+mod lobby;
 mod network;
 mod room;
 mod table;
-mod ui;
 
 #[derive(Debug, Default, Hash, PartialEq, Eq, Clone, Copy, States)]
 pub enum AppState {
@@ -50,11 +53,25 @@ fn main() {
         .add_plugin(RenetClientPlugin::default())
         .add_plugin(EguiPlugin)
         .add_state::<AppState>()
+        .add_event::<CreateRoomEvent>()
+        .add_event::<EnterRoomEvent>()
         .insert_resource(new_renet_client())
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(RoomList(Vec::new()))
+        .insert_resource(PlayerName(format!("Player{}", timestamp())))
+        .insert_resource(NewRoomSettings::default())
         .add_startup_systems((setup_camera,))
-        .add_systems((get_rooms, lobby_room_list_ui).in_set(OnUpdate(AppState::Lobby)))
+        .add_systems(
+            (
+                get_rooms,
+                create_room,
+                enter_room,
+                lobby_room_list_ui,
+                lobby_create_room_ui,
+                lobby_set_player_name_ui,
+            )
+                .in_set(OnUpdate(AppState::Lobby)),
+        )
         .add_systems((setup_table, setup_one_card).in_schedule(OnEnter(AppState::Gaming)))
         .run();
 }
