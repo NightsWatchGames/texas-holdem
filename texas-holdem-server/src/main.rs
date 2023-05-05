@@ -1,11 +1,17 @@
 use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::prelude::*;
-use bevy_renet::{RenetServerPlugin, renet::{RenetServer, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent}};
-use room::{Room, Player};
+use bevy_renet::{
+    renet::{RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig, ServerEvent},
+    RenetServerPlugin,
+};
+use room::{Player, Room};
 use texas_holdem_common::PROTOCOL_ID;
 
-use crate::{network::{handle_events_system, handle_get_rooms}, room::RoomList};
+use crate::{
+    network::{handle_events_system, handle_get_rooms},
+    room::RoomList,
+};
 
 mod network;
 mod room;
@@ -14,8 +20,11 @@ fn new_renet_server() -> RenetServer {
     let server_addr = "127.0.0.1:5000".parse().unwrap();
     let socket = UdpSocket::bind(server_addr).unwrap();
     let connection_config = RenetConnectionConfig::default();
-    let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
-    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+    let server_config =
+        ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
+    let current_time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap();
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
 

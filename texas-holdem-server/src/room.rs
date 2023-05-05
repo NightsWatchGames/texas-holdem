@@ -28,6 +28,11 @@ pub struct RoomList(pub Vec<Room>);
 
 impl Room {
     pub fn owner_name(&self) -> String {
-        self.players.iter().find(|user| user.player_client_id == self.owner_client_id).unwrap().player_name.clone()
+        self.players
+            .iter()
+            .find(|user| user.player_client_id == self.owner_client_id)
+            .unwrap()
+            .player_name
+            .clone()
     }
 }
