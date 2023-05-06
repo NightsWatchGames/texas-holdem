@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 serde = "1.0.160"
+bevy_renet = "0.0.7"

@@ -1,17 +1,25 @@
-use std::{net::UdpSocket, time::SystemTime};
+use std::{
+    net::UdpSocket,
+    time::{Duration, SystemTime},
+};
 
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_renet::{
-    renet::{ClientAuthentication, RenetClient, RenetConnectionConfig},
+    renet::{
+        ChannelConfig, ClientAuthentication, ReliableChannelConfig, RenetClient,
+        RenetConnectionConfig,
+    },
     RenetClientPlugin,
 };
 use lobby::{
-    lobby_create_room_ui, lobby_room_list_ui, lobby_set_player_name_ui, CreateRoomEvent,
-    EnterRoomEvent, NewRoomSettings, PlayerName, RoomList,
+    lobby_create_room_ui, lobby_enter_room_modal_ui, lobby_room_list_ui, lobby_set_player_name_ui,
+    CreateRoomEvent, EnterRoomEvent, InputPasswordModalOpen, NewRoomSettings, PlayerName, RoomList,
+    RoomToEnter,
 };
-use network::{create_room, enter_room};
-use texas_holdem_common::{util::timestamp, PROTOCOL_ID};
+use network::{create_room, enter_room, switch_player_role};
+use room::{player_role_ui_system, setup_player_role_ui, CurrentRoomInfo, SwitchPlayerRoleEvent};
+use texas_holdem_common::{connection_config, util::timestamp, PROTOCOL_ID};
 
 use crate::{
     network::get_rooms,
@@ -33,7 +41,6 @@ pub enum AppState {
 fn new_renet_client() -> RenetClient {
     let server_addr = "127.0.0.1:5000".parse().unwrap();
     let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap();
@@ -44,7 +51,7 @@ fn new_renet_client() -> RenetClient {
         server_addr,
         user_data: None,
     };
-    RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
+    RenetClient::new(current_time, socket, connection_config(), authentication).unwrap()
 }
 
 fn main() {
@@ -55,11 +62,15 @@ fn main() {
         .add_state::<AppState>()
         .add_event::<CreateRoomEvent>()
         .add_event::<EnterRoomEvent>()
+        .add_event::<SwitchPlayerRoleEvent>()
         .insert_resource(new_renet_client())
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(RoomList(Vec::new()))
         .insert_resource(PlayerName(format!("Player{}", timestamp())))
         .insert_resource(NewRoomSettings::default())
+        .insert_resource(RoomToEnter::default())
+        .insert_resource(InputPasswordModalOpen::default())
+        .insert_resource(CurrentRoomInfo::default())
         .add_startup_systems((setup_camera,))
         .add_systems(
             (
@@ -67,12 +78,24 @@ fn main() {
                 create_room,
                 enter_room,
                 lobby_room_list_ui,
+                lobby_enter_room_modal_ui,
                 lobby_create_room_ui,
                 lobby_set_player_name_ui,
             )
                 .in_set(OnUpdate(AppState::Lobby)),
         )
-        .add_systems((setup_table, setup_one_card).in_schedule(OnEnter(AppState::Gaming)))
+        .add_systems(
+            (setup_table, setup_one_card, setup_player_role_ui)
+                .in_schedule(OnEnter(AppState::Gaming)),
+        )
+        .add_systems(
+            (
+                player_role_ui_system,
+                player_role_ui_system,
+                switch_player_role,
+            )
+                .in_set(OnUpdate(AppState::Gaming)),
+        )
         .run();
 }
 

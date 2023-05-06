@@ -2,14 +2,16 @@ use bevy::prelude::*;
 use bevy_renet::renet::RenetClient;
 use texas_holdem_common::{
     channel::{
-        CreateRoomMessage, EnterRoomMessage, GetRoomsMessage, CREATE_ROOM_CHANNEL_ID,
-        ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID,
+        CreateRoomMessage, EnterRoomMessage, GetRoomsMessage, SwitchPlayerRoleMessage,
+        CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID,
+        SWITCH_PLAYER_ROLE_CHANNEL_ID,
     },
     util::timestamp,
 };
 
 use crate::{
     lobby::{CreateRoomEvent, EnterRoomEvent, NewRoomSettings, PlayerName, RoomList},
+    room::{CurrentRoomInfo, SwitchPlayerRoleEvent},
     AppState,
 };
 
@@ -45,6 +47,7 @@ pub fn create_room(
     player_name: Res<PlayerName>,
     mut last_timestamp: Local<u64>,
     mut app_state: ResMut<NextState<AppState>>,
+    mut current_room_info: ResMut<CurrentRoomInfo>,
 ) {
     // TODO 防止重复创建房间
     for _ in create_room_er.iter() {
@@ -67,6 +70,7 @@ pub fn create_room(
         if let Ok(message) = serde_json::from_slice::<CreateRoomMessage>(&message) {
             if message.timestamp == *last_timestamp {
                 info!("Received create room message: {:?}", message);
+                current_room_info.room_id = message.room_id;
                 app_state.set(AppState::Gaming);
             }
         }
@@ -79,6 +83,7 @@ pub fn enter_room(
     player_name: Res<PlayerName>,
     mut last_timestamp: Local<u64>,
     mut app_state: ResMut<NextState<AppState>>,
+    mut current_room_info: ResMut<CurrentRoomInfo>,
 ) {
     for event in enter_room_er.iter() {
         let timestamp = timestamp();
@@ -97,7 +102,39 @@ pub fn enter_room(
         if let Ok(message) = serde_json::from_slice::<EnterRoomMessage>(&message) {
             if message.timestamp == *last_timestamp && message.success {
                 info!("Received enter room message: {:?}", message);
+                current_room_info.room_id = message.room_id;
                 app_state.set(AppState::Gaming);
+            }
+        }
+    }
+}
+
+pub fn switch_player_role(
+    mut switch_player_role_er: EventReader<SwitchPlayerRoleEvent>,
+    mut client: ResMut<RenetClient>,
+    mut last_timestamp: Local<u64>,
+    mut current_room_info: ResMut<CurrentRoomInfo>,
+) {
+    for event in switch_player_role_er.iter() {
+        let timestamp = timestamp();
+        let message = SwitchPlayerRoleMessage {
+            timestamp,
+            room_id: event.room_id,
+            target_player_role: event.target_player_role,
+            success: false,
+        };
+        client.send_message(
+            SWITCH_PLAYER_ROLE_CHANNEL_ID,
+            serde_json::to_vec(&message).unwrap(),
+        );
+        *last_timestamp = timestamp;
+    }
+
+    while let Some(message) = client.receive_message(SWITCH_PLAYER_ROLE_CHANNEL_ID) {
+        if let Ok(message) = serde_json::from_slice::<SwitchPlayerRoleMessage>(&message) {
+            if message.timestamp == *last_timestamp && message.success {
+                info!("Received switch player role message: {:?}", message);
+                current_room_info.my_role = message.target_player_role;
             }
         }
     }

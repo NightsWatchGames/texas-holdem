@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use texas_holdem_common::PlayerRole;
 
 #[derive(Debug)]
 pub struct Player {
@@ -8,16 +9,11 @@ pub struct Player {
 }
 
 #[derive(Debug)]
-pub enum PlayerRole {
-    Spectator,
-    Participant,
-}
-
-#[derive(Debug)]
 pub struct Room {
     pub room_id: u64,
     pub room_name: String,
     pub room_password: String,
+    pub room_state: RoomState,
     pub owner_client_id: u64,
     pub players: Vec<Player>,
 }
@@ -35,4 +31,22 @@ impl Room {
             .player_name
             .clone()
     }
+}
+
+#[derive(Debug)]
+pub enum RoomState {
+    // 等待中
+    Waiting,
+    // 游戏中
+    Playing,
+    // 暂停中
+    Paused,
+}
+
+// 一场对局
+#[derive(Debug)]
+pub struct Play {
+    pub play_id: u64,
+    pub room_id: u64,
+    pub participants: Vec<Player>,
 }
