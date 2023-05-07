@@ -3,15 +3,16 @@ use bevy_renet::renet::RenetClient;
 use texas_holdem_common::{
     channel::{
         BroadcastRoomInfoMessage, CreateRoomMessage, EnterRoomMessage, GetRoomsMessage,
-        SwitchPlayerRoleMessage, BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID,
-        ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
+        SetRoomStateMessage, SwitchPlayerRoleMessage, BROADCAST_ROOM_INFO_CHANNEL_ID,
+        CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID,
+        SET_ROOM_STATE_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
     },
     util::timestamp,
 };
 
 use crate::{
     lobby::{CreateRoomEvent, EnterRoomEvent, NewRoomSettings, PlayerName, RoomList},
-    room::{CurrentRoomInfo, SwitchPlayerRoleEvent},
+    room::{CurrentRoomInfo, SetRoomStateEvent, SwitchPlayerRoleEvent},
     AppState,
 };
 
@@ -160,6 +161,39 @@ pub fn receive_room_info(
                 current_room_info.room_state = message.room_state;
                 current_room_info.players = message.players;
                 *last_timestamp = message.timestamp;
+            }
+        }
+    }
+}
+
+pub fn set_room_state(
+    mut set_room_state_er: EventReader<SetRoomStateEvent>,
+    mut client: ResMut<RenetClient>,
+    mut last_timestamp: Local<u64>,
+    mut current_room_info: ResMut<CurrentRoomInfo>,
+    player_name: Res<PlayerName>,
+) {
+    for event in set_room_state_er.iter() {
+        let timestamp = timestamp();
+        let message = SetRoomStateMessage {
+            timestamp,
+            room_id: current_room_info.room_id,
+            player_name: player_name.0.clone(),
+            target_room_state: event.target_room_state,
+            success: false,
+        };
+        client.send_message(
+            SET_ROOM_STATE_CHANNEL_ID,
+            serde_json::to_vec(&message).unwrap(),
+        );
+        *last_timestamp = timestamp;
+    }
+
+    while let Some(message) = client.receive_message(SET_ROOM_STATE_CHANNEL_ID) {
+        if let Ok(message) = serde_json::from_slice::<SetRoomStateMessage>(&message) {
+            if message.timestamp == *last_timestamp && message.success {
+                info!("Received set room state message: {:?}", message);
+                current_room_info.room_state = message.target_room_state;
             }
         }
     }

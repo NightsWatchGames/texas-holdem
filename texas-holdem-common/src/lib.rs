@@ -5,7 +5,7 @@ use bevy_renet::renet::{
 };
 use channel::{
     BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID,
-    GET_ROOMS_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
+    GET_ROOMS_CHANNEL_ID, SET_ROOM_STATE_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
 };
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +36,10 @@ pub fn connection_config() -> RenetConnectionConfig {
             channel_id: BROADCAST_ROOM_INFO_CHANNEL_ID,
             ..Default::default()
         }),
+        ChannelConfig::Reliable(ReliableChannelConfig {
+            channel_id: SET_ROOM_STATE_CHANNEL_ID,
+            ..Default::default()
+        }),
     ];
 
     RenetConnectionConfig {
@@ -58,6 +62,8 @@ pub struct RoomDTO {
     pub room_id: u64,
     // 房间名称
     pub room_name: String,
+    // 房间状态
+    pub room_state: RoomState,
     // 房主名称
     pub owner_name: String,
     // 房间人数

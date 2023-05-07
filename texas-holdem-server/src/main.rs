@@ -1,27 +1,20 @@
-use std::{
-    net::UdpSocket,
-    time::{Duration, SystemTime},
-};
+use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::{log::LogPlugin, prelude::*};
 use bevy_renet::{
-    renet::{
-        ChannelConfig, ReliableChannelConfig, RenetServer, ServerAuthentication, ServerConfig,
-        ServerEvent,
-    },
+    renet::{RenetServer, ServerAuthentication, ServerConfig},
     RenetServerPlugin,
 };
-use network::{
-    broadcast_room_info, handle_create_room, handle_enter_room, handle_switch_player_role,
-};
+use lobby::{handle_create_room, handle_enter_room, handle_get_rooms};
+use play::PlayList;
+use room::{broadcast_room_info, handle_set_room_state, handle_switch_player_role};
 use texas_holdem_common::{connection_config, PROTOCOL_ID};
 
-use crate::{
-    network::{handle_events_system, handle_get_rooms},
-    room::RoomList,
-};
+use crate::{network::handle_events_system, room::RoomList};
 
+mod lobby;
 mod network;
+mod play;
 mod room;
 
 fn new_renet_server() -> RenetServer {
@@ -42,12 +35,14 @@ fn main() {
         .add_plugin(RenetServerPlugin::default())
         .insert_resource(new_renet_server())
         .insert_resource(RoomList(Vec::new()))
+        .insert_resource(PlayList(Vec::new()))
         .add_systems((
             handle_get_rooms,
             handle_create_room,
             handle_enter_room,
             handle_switch_player_role,
             broadcast_room_info,
+            handle_set_room_state,
             handle_events_system,
         ))
         .run();

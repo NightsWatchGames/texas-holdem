@@ -11,11 +11,12 @@ use lobby::{
     CreateRoomEvent, EnterRoomEvent, InputPasswordModalOpen, NewRoomSettings, PlayerName, RoomList,
     RoomToEnter,
 };
-use network::{create_room, enter_room, receive_room_info, switch_player_role};
+use network::{create_room, enter_room, receive_room_info, set_room_state, switch_player_role};
 use play::CurrentPlayInfo;
 use room::{
     play_round_ui_system, player_list_ui_system, player_role_ui_system, room_state_ui_system,
-    setup_room_ui, CurrentRoomInfo, SwitchPlayerRoleEvent,
+    set_room_state_ui_system, setup_room_ui, CurrentRoomInfo, SetRoomStateEvent,
+    SwitchPlayerRoleEvent,
 };
 use texas_holdem_common::{connection_config, util::timestamp, PROTOCOL_ID};
 
@@ -62,6 +63,7 @@ fn main() {
         .add_event::<CreateRoomEvent>()
         .add_event::<EnterRoomEvent>()
         .add_event::<SwitchPlayerRoleEvent>()
+        .add_event::<SetRoomStateEvent>()
         .insert_resource(new_renet_client())
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(RoomList(Vec::new()))
@@ -93,8 +95,10 @@ fn main() {
                 player_list_ui_system,
                 room_state_ui_system,
                 play_round_ui_system,
+                set_room_state_ui_system,
                 switch_player_role,
                 receive_room_info,
+                set_room_state,
             )
                 .in_set(OnUpdate(AppState::Gaming)),
         )

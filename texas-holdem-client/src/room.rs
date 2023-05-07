@@ -21,6 +21,16 @@ pub struct PlayRoundUI;
 #[derive(Debug, Component)]
 pub struct PlayRoundUIText;
 
+#[derive(Debug, Component)]
+pub struct SetRoomStatePlayingButton;
+#[derive(Debug, Component)]
+pub struct SetRoomStatePausedButton;
+
+#[derive(Debug)]
+pub struct SetRoomStateEvent {
+    pub target_room_state: RoomState,
+}
+
 // 当前房间信息
 #[derive(Debug, Default, Resource)]
 pub struct CurrentRoomInfo {
@@ -267,15 +277,81 @@ pub fn setup_room_ui(
                         ..default()
                     });
                     // 玩家操作按键
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            size: Size::new(Val::Auto, Val::Px(300.0)),
-                            margin: UiRect::all(Val::Px(10.0)),
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                size: Size::new(Val::Auto, Val::Px(300.0)),
+                                flex_direction: FlexDirection::ColumnReverse,
+                                align_items: AlignItems::End,
+                                margin: UiRect::all(Val::Px(10.0)),
+                                ..default()
+                            },
+                            background_color: Color::FUCHSIA.into(),
                             ..default()
-                        },
-                        background_color: Color::FUCHSIA.into(),
-                        ..default()
-                    });
+                        })
+                        .with_children(|parent| {
+                            // 设置房间状态
+                            parent
+                                .spawn(NodeBundle {
+                                    style: Style {
+                                        size: Size::new(Val::Auto, Val::Px(40.0)),
+                                        ..default()
+                                    },
+                                    background_color: Color::RED.into(),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    let button_text_style = TextStyle {
+                                        font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
+                                        font_size: 20.0,
+                                        ..default()
+                                    };
+                                    let button_style = Style {
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        padding: UiRect::horizontal(Val::Px(10.0)),
+                                        ..default()
+                                    };
+                                    parent
+                                        .spawn((
+                                            SetRoomStatePlayingButton,
+                                            ButtonBundle {
+                                                style: button_style.clone(),
+                                                background_color: NORMAL_PLAYER_ROLE_BUTTON_COLOR
+                                                    .into(),
+                                                ..default()
+                                            },
+                                        ))
+                                        .with_children(|parent| {
+                                            parent.spawn(TextBundle {
+                                                text: Text::from_section(
+                                                    "Play",
+                                                    button_text_style.clone(),
+                                                ),
+                                                ..default()
+                                            });
+                                        });
+                                    parent
+                                        .spawn((
+                                            SetRoomStatePausedButton,
+                                            ButtonBundle {
+                                                style: button_style.clone(),
+                                                background_color: SELECTED_PLAYER_ROLE_BUTTON_COLOR
+                                                    .into(),
+                                                ..default()
+                                            },
+                                        ))
+                                        .with_children(|parent| {
+                                            parent.spawn(TextBundle {
+                                                text: Text::from_section(
+                                                    "Pause",
+                                                    button_text_style.clone(),
+                                                ),
+                                                ..default()
+                                            });
+                                        });
+                                });
+                        });
                 });
         });
 }
@@ -404,5 +480,37 @@ pub fn play_round_ui_system(
 
     for mut text in &mut q_play_round_ui_text {
         text.sections[0].value = format!("Round - {}", current_play_info.round.name());
+    }
+}
+
+pub fn set_room_state_ui_system(
+    q_set_room_state_playing_button: Query<Ref<Interaction>, With<SetRoomStatePlayingButton>>,
+    q_set_room_state_paused_button: Query<
+        Ref<Interaction>,
+        (
+            With<SetRoomStatePausedButton>,
+            Without<SetRoomStatePlayingButton>,
+        ),
+    >,
+    mut set_room_state_ew: EventWriter<SetRoomStateEvent>,
+) {
+    let set_room_state_playing_interaction = q_set_room_state_playing_button.single();
+    let set_room_state_paused_interaction = q_set_room_state_paused_button.single();
+
+    // 点击设置房间状态
+    if Interaction::Clicked == *set_room_state_playing_interaction
+        && set_room_state_playing_interaction.is_changed()
+    {
+        println!("set_room_state_playing_button clicked");
+        set_room_state_ew.send(SetRoomStateEvent {
+            target_room_state: RoomState::Playing,
+        });
+    } else if Interaction::Clicked == *set_room_state_paused_interaction
+        && set_room_state_paused_interaction.is_changed()
+    {
+        println!("set_room_state_paused_button clicked");
+        set_room_state_ew.send(SetRoomStateEvent {
+            target_room_state: RoomState::Paused,
+        });
     }
 }
