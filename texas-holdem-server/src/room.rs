@@ -1,12 +1,5 @@
 use bevy::prelude::*;
-use texas_holdem_common::PlayerRole;
-
-#[derive(Debug)]
-pub struct Player {
-    pub player_client_id: u64,
-    pub player_name: String,
-    pub player_role: PlayerRole,
-}
+use texas_holdem_common::{Player, PlayerRole};
 
 #[derive(Debug)]
 pub struct Room {

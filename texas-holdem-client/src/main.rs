@@ -11,8 +11,11 @@ use lobby::{
     CreateRoomEvent, EnterRoomEvent, InputPasswordModalOpen, NewRoomSettings, PlayerName, RoomList,
     RoomToEnter,
 };
-use network::{create_room, enter_room, switch_player_role};
-use room::{player_role_ui_system, setup_room_ui, CurrentRoomInfo, SwitchPlayerRoleEvent};
+use network::{create_room, enter_room, receive_room_info, switch_player_role};
+use room::{
+    player_list_ui_system, player_role_ui_system, setup_room_ui, CurrentRoomInfo,
+    SwitchPlayerRoleEvent,
+};
 use texas_holdem_common::{connection_config, util::timestamp, PROTOCOL_ID};
 
 use crate::{
@@ -81,7 +84,15 @@ fn main() {
         .add_systems(
             (setup_table, setup_one_card, setup_room_ui).in_schedule(OnEnter(AppState::Gaming)),
         )
-        .add_systems((player_role_ui_system, switch_player_role).in_set(OnUpdate(AppState::Gaming)))
+        .add_systems(
+            (
+                player_role_ui_system,
+                player_list_ui_system,
+                switch_player_role,
+                receive_room_info,
+            )
+                .in_set(OnUpdate(AppState::Gaming)),
+        )
         .run();
 }
 

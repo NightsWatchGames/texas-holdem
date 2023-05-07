@@ -1,4 +1,4 @@
-use crate::{PlayerRole, RoomDTO};
+use crate::{Player, PlayerRole, RoomDTO};
 use serde::{Deserialize, Serialize};
 
 // 获取房间列表
@@ -9,6 +9,8 @@ pub const CREATE_ROOM_CHANNEL_ID: u8 = 1;
 pub const ENTER_ROOT_CHANNEL_ID: u8 = 2;
 // 切换角色
 pub const SWITCH_PLAYER_ROLE_CHANNEL_ID: u8 = 3;
+// 房间信息
+pub const BROADCAST_ROOM_INFO_CHANNEL_ID: u8 = 4;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetRoomsMessage {
@@ -47,4 +49,13 @@ pub struct SwitchPlayerRoleMessage {
     pub target_player_role: PlayerRole,
     // resp
     pub success: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BroadcastRoomInfoMessage {
+    pub timestamp: u64,
+    pub room_id: u64,
+    pub room_name: String,
+    pub players: Vec<Player>,
+    // pub operation_log: Vec<String>,
 }

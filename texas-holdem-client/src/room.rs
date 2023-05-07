@@ -1,8 +1,7 @@
 use bevy::prelude::*;
-use texas_holdem_common::PlayerRole;
+use texas_holdem_common::{Player, PlayerRole};
 
-#[derive(Debug, Component)]
-pub struct PlayerRoleUI;
+use crate::lobby::PlayerName;
 
 #[derive(Debug, Component)]
 pub struct ParticipantRoleButton;
@@ -10,11 +9,25 @@ pub struct ParticipantRoleButton;
 #[derive(Debug, Component)]
 pub struct SpectatorRoleButton;
 
+#[derive(Debug, Component)]
+pub struct PlayerListUI;
+#[derive(Debug, Component)]
+pub struct PlayerListUIItem;
+
 // 当前房间信息
 #[derive(Debug, Default, Resource)]
 pub struct CurrentRoomInfo {
     pub room_id: u64,
     pub my_role: PlayerRole,
+    pub players: Vec<Player>,
+}
+
+impl CurrentRoomInfo {
+    pub fn contains_player(&self, player_name: &str) -> bool {
+        self.players
+            .iter()
+            .any(|player| player.player_name == player_name)
+    }
 }
 
 #[derive(Debug)]
@@ -26,7 +39,11 @@ pub struct SwitchPlayerRoleEvent {
 const NORMAL_PLAYER_ROLE_BUTTON_COLOR: Color = Color::rgb(0.15, 0.15, 0.15);
 const SELECTED_PLAYER_ROLE_BUTTON_COLOR: Color = Color::rgb(0.35, 0.75, 0.35);
 
-pub fn setup_room_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_room_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    player_name: Res<PlayerName>,
+) {
     commands
         .spawn((NodeBundle {
             style: Style {
@@ -109,29 +126,38 @@ pub fn setup_room_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                                     });
                                 });
                         });
-                    // 房间玩家信息
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            size: Size::new(Val::Auto, Val::Px(300.0)),
-                            flex_direction: FlexDirection::ColumnReverse,
-                            margin: UiRect::all(Val::Px(10.0)),
-                            ..default()
-                        },
-                        background_color: Color::BLUE.into(),
-                        ..default()
-                    }).with_children(|parent| {
-                        parent.spawn(TextBundle {
-                            text: Text::from_section(
-                                "Player1",
-                                TextStyle {
-                                    font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
-                                    font_size: 20.0,
+                    // 房间玩家信息 TODO scrollable
+                    parent
+                        .spawn((
+                            PlayerListUI,
+                            NodeBundle {
+                                style: Style {
+                                    size: Size::new(Val::Auto, Val::Px(300.0)),
+                                    flex_direction: FlexDirection::ColumnReverse,
+                                    margin: UiRect::all(Val::Px(10.0)),
+                                    overflow: Overflow::Hidden,
                                     ..default()
                                 },
-                            ),
-                            ..default()
+                                background_color: Color::BLUE.into(),
+                                ..default()
+                            },
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn((
+                                PlayerListUIItem,
+                                TextBundle {
+                                    text: Text::from_section(
+                                        player_name.0.clone(),
+                                        TextStyle {
+                                            font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
+                                            font_size: 20.0,
+                                            ..default()
+                                        },
+                                    ),
+                                    ..default()
+                                },
+                            ));
                         });
-                    });
                 });
             // 中间布局
             parent
@@ -238,6 +264,57 @@ pub fn player_role_ui_system(
         PlayerRole::Spectator => {
             *participant_role_button_bg_color = NORMAL_PLAYER_ROLE_BUTTON_COLOR.into();
             *spectator_role_button_bg_color = SELECTED_PLAYER_ROLE_BUTTON_COLOR.into();
+        }
+    }
+}
+
+pub fn player_list_ui_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_room_info: Res<CurrentRoomInfo>,
+    mut q_player_list_ui: Query<Entity, With<PlayerListUI>>,
+    q_player_list_ui_item: Query<(Entity, &Text), With<PlayerListUIItem>>,
+) {
+    let parent = q_player_list_ui.single_mut();
+    // 删除已经不在房间的玩家
+    for (entity, text) in &q_player_list_ui_item {
+        if !current_room_info.contains_player(&text.sections[0].value) {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+
+    // 新增玩家
+    for player in current_room_info.players.iter() {
+        if !q_player_list_ui_item
+            .iter()
+            .any(|(_, text)| text.sections[0].value == player.player_name)
+        {
+            commands.entity(parent).with_children(|parent| {
+                parent.spawn((
+                    PlayerListUIItem,
+                    TextBundle {
+                        text: Text::from_sections(vec![
+                            TextSection {
+                                value: player.player_name.clone(),
+                                style: TextStyle {
+                                    font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
+                                    font_size: 20.0,
+                                    ..default()
+                                },
+                            },
+                            TextSection {
+                                value: format!("  {}", player.player_role.name()),
+                                style: TextStyle {
+                                    font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
+                                    font_size: 10.0,
+                                    ..default()
+                                },
+                            },
+                        ]),
+                        ..default()
+                    },
+                ));
+            });
         }
     }
 }

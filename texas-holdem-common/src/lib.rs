@@ -1,7 +1,12 @@
 use std::time::Duration;
 
-use bevy_renet::renet::{ChannelConfig, ReliableChannelConfig, RenetConnectionConfig};
-use channel::{GET_ROOMS_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID};
+use bevy_renet::renet::{
+    ChannelConfig, ReliableChannelConfig, RenetConnectionConfig, UnreliableChannelConfig,
+};
+use channel::{
+    BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID,
+    GET_ROOMS_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
+};
 use serde::{Deserialize, Serialize};
 
 pub mod channel;
@@ -25,6 +30,10 @@ pub fn connection_config() -> RenetConnectionConfig {
         }),
         ChannelConfig::Reliable(ReliableChannelConfig {
             channel_id: SWITCH_PLAYER_ROLE_CHANNEL_ID,
+            ..Default::default()
+        }),
+        ChannelConfig::Unreliable(UnreliableChannelConfig {
+            channel_id: BROADCAST_ROOM_INFO_CHANNEL_ID,
             ..Default::default()
         }),
     ];
@@ -70,4 +79,20 @@ pub enum PlayerRole {
     Spectator,
     // 参与者
     Participant,
+}
+
+impl PlayerRole {
+    pub fn name(&self) -> &'static str {
+        match self {
+            PlayerRole::Spectator => "Spectator",
+            PlayerRole::Participant => "Participant",
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Clone, Deserialize)]
+pub struct Player {
+    pub player_client_id: u64,
+    pub player_name: String,
+    pub player_role: PlayerRole,
 }

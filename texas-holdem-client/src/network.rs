@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use bevy_renet::renet::RenetClient;
 use texas_holdem_common::{
     channel::{
-        CreateRoomMessage, EnterRoomMessage, GetRoomsMessage, SwitchPlayerRoleMessage,
-        CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID,
-        SWITCH_PLAYER_ROLE_CHANNEL_ID,
+        BroadcastRoomInfoMessage, CreateRoomMessage, EnterRoomMessage, GetRoomsMessage,
+        SwitchPlayerRoleMessage, BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID,
+        ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
     },
     util::timestamp,
 };
@@ -135,6 +135,30 @@ pub fn switch_player_role(
             if message.timestamp == *last_timestamp && message.success {
                 info!("Received switch player role message: {:?}", message);
                 current_room_info.my_role = message.target_player_role;
+            }
+        }
+    }
+}
+
+pub fn receive_room_info(
+    mut client: ResMut<RenetClient>,
+    mut last_timestamp: Local<u64>,
+    mut current_room_info: ResMut<CurrentRoomInfo>,
+    player_name: Res<PlayerName>,
+) {
+    while let Some(message) = client.receive_message(BROADCAST_ROOM_INFO_CHANNEL_ID) {
+        if let Ok(message) = serde_json::from_slice::<BroadcastRoomInfoMessage>(&message) {
+            if message.timestamp > *last_timestamp {
+                info!("Received room info message: {:?}", message);
+                if let Some(player) = current_room_info
+                    .players
+                    .iter()
+                    .find(|player| player.player_name == player_name.0)
+                {
+                    current_room_info.my_role = player.player_role;
+                }
+                current_room_info.players = message.players;
+                *last_timestamp = message.timestamp;
             }
         }
     }

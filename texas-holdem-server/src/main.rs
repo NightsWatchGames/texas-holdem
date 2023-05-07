@@ -11,7 +11,9 @@ use bevy_renet::{
     },
     RenetServerPlugin,
 };
-use network::{handle_create_room, handle_enter_room, handle_switch_player_role};
+use network::{
+    broadcast_room_info, handle_create_room, handle_enter_room, handle_switch_player_role,
+};
 use texas_holdem_common::{connection_config, PROTOCOL_ID};
 
 use crate::{
@@ -45,6 +47,7 @@ fn main() {
             handle_create_room,
             handle_enter_room,
             handle_switch_player_role,
+            broadcast_room_info,
             handle_events_system,
         ))
         .run();

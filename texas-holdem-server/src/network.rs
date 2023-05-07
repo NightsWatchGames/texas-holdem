@@ -1,16 +1,16 @@
 use bevy::prelude::*;
-use bevy_renet::renet::{DefaultChannel, RenetServer, ServerEvent};
+use bevy_renet::renet::{RenetServer, ServerEvent};
 use texas_holdem_common::{
     channel::{
-        CreateRoomMessage, EnterRoomMessage, GetRoomsMessage, SwitchPlayerRoleMessage,
-        CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID,
-        SWITCH_PLAYER_ROLE_CHANNEL_ID,
+        BroadcastRoomInfoMessage, CreateRoomMessage, EnterRoomMessage, GetRoomsMessage,
+        SwitchPlayerRoleMessage, BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID,
+        ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
     },
     util::timestamp,
-    PlayerRole, RoomDTO,
+    Player, PlayerRole, RoomDTO,
 };
 
-use crate::room::{Player, Room, RoomList, RoomState};
+use crate::room::{Room, RoomList, RoomState};
 
 pub fn handle_get_rooms(mut server: ResMut<RenetServer>, room_list: Res<RoomList>) {
     for client_id in server.clients_id().into_iter() {
@@ -124,6 +124,34 @@ pub fn handle_switch_player_role(mut server: ResMut<RenetServer>, mut room_list:
                 }
             }
         }
+    }
+}
+
+pub fn broadcast_room_info(
+    mut server: ResMut<RenetServer>,
+    room_list: Res<RoomList>,
+    mut refresh_cd: Local<f32>,
+    time: Res<Time>,
+) {
+    *refresh_cd -= time.delta_seconds();
+    if *refresh_cd < 0.0 {
+        for room in room_list.0.iter() {
+            let message = BroadcastRoomInfoMessage {
+                timestamp: timestamp(),
+                room_id: room.room_id,
+                room_name: room.room_name.clone(),
+                players: room.players.clone(),
+            };
+            for player in room.players.iter() {
+                server.send_message(
+                    player.player_client_id,
+                    BROADCAST_ROOM_INFO_CHANNEL_ID,
+                    serde_json::to_vec(&message).unwrap(),
+                );
+            }
+        }
+        // 5秒广播一次
+        *refresh_cd = 5.0;
     }
 }
 
