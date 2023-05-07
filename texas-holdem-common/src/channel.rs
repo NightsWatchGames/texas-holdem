@@ -1,4 +1,4 @@
-use crate::{Player, PlayerRole, RoomDTO};
+use crate::{Player, PlayerRole, RoomDTO, RoomState};
 use serde::{Deserialize, Serialize};
 
 // 获取房间列表
@@ -56,6 +56,7 @@ pub struct BroadcastRoomInfoMessage {
     pub timestamp: u64,
     pub room_id: u64,
     pub room_name: String,
+    pub room_state: RoomState,
     pub players: Vec<Player>,
     // pub operation_log: Vec<String>,
 }

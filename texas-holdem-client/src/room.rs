@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use texas_holdem_common::{Player, PlayerRole};
+use texas_holdem_common::{Player, PlayerRole, RoomState};
 
-use crate::lobby::PlayerName;
+use crate::{lobby::PlayerName, play::CurrentPlayInfo};
 
 #[derive(Debug, Component)]
 pub struct ParticipantRoleButton;
@@ -14,10 +14,18 @@ pub struct PlayerListUI;
 #[derive(Debug, Component)]
 pub struct PlayerListUIItem;
 
+#[derive(Debug, Component)]
+pub struct RoomStateUIText;
+#[derive(Debug, Component)]
+pub struct PlayRoundUI;
+#[derive(Debug, Component)]
+pub struct PlayRoundUIText;
+
 // 当前房间信息
 #[derive(Debug, Default, Resource)]
 pub struct CurrentRoomInfo {
     pub room_id: u64,
+    pub room_state: RoomState,
     pub my_role: PlayerRole,
     pub players: Vec<Player>,
 }
@@ -43,6 +51,7 @@ pub fn setup_room_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_name: Res<PlayerName>,
+    current_room_info: Res<CurrentRoomInfo>,
 ) {
     commands
         .spawn((NodeBundle {
@@ -164,7 +173,8 @@ pub fn setup_room_ui(
                 .spawn(NodeBundle {
                     style: Style {
                         size: Size::new(Val::Percent(60.0), Val::Percent(100.0)),
-                        justify_content: JustifyContent::Center,
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::Center,
                         ..default()
                     },
                     background_color: Color::GRAY.into(),
@@ -172,15 +182,66 @@ pub fn setup_room_ui(
                 })
                 .with_children(|parent| {
                     // 房间状态
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            size: Size::new(Val::Px(300.0), Val::Px(50.0)),
-                            margin: UiRect::top(Val::Px(10.0)),
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(300.0), Val::Px(50.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::top(Val::Px(10.0)),
+                                ..default()
+                            },
+                            background_color: Color::BLUE.into(),
                             ..default()
-                        },
-                        background_color: Color::BLUE.into(),
-                        ..default()
-                    });
+                        })
+                        .with_children(|parent| {
+                            parent.spawn((
+                                RoomStateUIText,
+                                TextBundle {
+                                    text: Text::from_section(
+                                        current_room_info.room_state.name(),
+                                        TextStyle {
+                                            font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
+                                            font_size: 40.0,
+                                            ..default()
+                                        },
+                                    ),
+                                    ..default()
+                                },
+                            ));
+                        });
+                    // 对局round
+                    parent
+                        .spawn((
+                            PlayRoundUI,
+                            NodeBundle {
+                                style: Style {
+                                    size: Size::new(Val::Px(200.0), Val::Px(30.0)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    margin: UiRect::top(Val::Px(10.0)),
+                                    ..default()
+                                },
+                                background_color: Color::BLUE.into(),
+                                ..default()
+                            },
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn((
+                                PlayRoundUIText,
+                                TextBundle {
+                                    text: Text::from_section(
+                                        "Round - ?",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/ThaleahFat_TTF.ttf"),
+                                            font_size: 20.0,
+                                            ..default()
+                                        },
+                                    ),
+                                    ..default()
+                                },
+                            ));
+                        });
                 });
             // 右侧布局
             parent
@@ -316,5 +377,32 @@ pub fn player_list_ui_system(
                 ));
             });
         }
+    }
+}
+
+pub fn room_state_ui_system(
+    mut q_room_state_text: Query<&mut Text, With<RoomStateUIText>>,
+    current_room_info: Res<CurrentRoomInfo>,
+) {
+    for mut text in &mut q_room_state_text {
+        text.sections[0].value = current_room_info.room_state.name().to_string();
+    }
+}
+
+pub fn play_round_ui_system(
+    mut q_play_round_ui: Query<&mut Visibility, With<PlayRoundUI>>,
+    mut q_play_round_ui_text: Query<&mut Text, With<PlayRoundUIText>>,
+    current_play_info: Res<CurrentPlayInfo>,
+) {
+    for mut visibility in &mut q_play_round_ui {
+        *visibility = if current_play_info.play_id.is_some() {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
+    }
+
+    for mut text in &mut q_play_round_ui_text {
+        text.sections[0].value = format!("Round - {}", current_play_info.round.name());
     }
 }

@@ -157,6 +157,7 @@ pub fn receive_room_info(
                 {
                     current_room_info.my_role = player.player_role;
                 }
+                current_room_info.room_state = message.room_state;
                 current_room_info.players = message.players;
                 *last_timestamp = message.timestamp;
             }

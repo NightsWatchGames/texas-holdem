@@ -7,10 +7,10 @@ use texas_holdem_common::{
         ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
     },
     util::timestamp,
-    Player, PlayerRole, RoomDTO,
+    Player, PlayerRole, RoomDTO, RoomState,
 };
 
-use crate::room::{Room, RoomList, RoomState};
+use crate::room::{Room, RoomList};
 
 pub fn handle_get_rooms(mut server: ResMut<RenetServer>, room_list: Res<RoomList>) {
     for client_id in server.clients_id().into_iter() {
@@ -23,7 +23,7 @@ pub fn handle_get_rooms(mut server: ResMut<RenetServer>, room_list: Res<RoomList
                     .map(|room| RoomDTO {
                         room_id: room.room_id,
                         room_name: room.room_name.clone(),
-                        owner_name: room.owner_name(),
+                        owner_name: room.owner_name.clone(),
                         player_count: room.players.len() as u32,
                     })
                     .collect();
@@ -48,7 +48,7 @@ pub fn handle_create_room(mut server: ResMut<RenetServer>, mut room_list: ResMut
                     room_name: message.room_name.clone(),
                     room_password: message.room_password.clone(),
                     room_state: RoomState::Waiting,
-                    owner_client_id: client_id,
+                    owner_name: message.player_name.clone(),
                     players: vec![Player {
                         player_client_id: client_id,
                         player_name: message.player_name.clone(),
@@ -140,6 +140,7 @@ pub fn broadcast_room_info(
                 timestamp: timestamp(),
                 room_id: room.room_id,
                 room_name: room.room_name.clone(),
+                room_state: room.room_state,
                 players: room.players.clone(),
             };
             for player in room.players.iter() {

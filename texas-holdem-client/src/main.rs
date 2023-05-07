@@ -12,9 +12,10 @@ use lobby::{
     RoomToEnter,
 };
 use network::{create_room, enter_room, receive_room_info, switch_player_role};
+use play::CurrentPlayInfo;
 use room::{
-    player_list_ui_system, player_role_ui_system, setup_room_ui, CurrentRoomInfo,
-    SwitchPlayerRoleEvent,
+    play_round_ui_system, player_list_ui_system, player_role_ui_system, room_state_ui_system,
+    setup_room_ui, CurrentRoomInfo, SwitchPlayerRoleEvent,
 };
 use texas_holdem_common::{connection_config, util::timestamp, PROTOCOL_ID};
 
@@ -25,6 +26,7 @@ use crate::{
 
 mod lobby;
 mod network;
+mod play;
 mod room;
 mod table;
 
@@ -68,6 +70,7 @@ fn main() {
         .insert_resource(RoomToEnter::default())
         .insert_resource(InputPasswordModalOpen::default())
         .insert_resource(CurrentRoomInfo::default())
+        .insert_resource(CurrentPlayInfo::default())
         .add_startup_systems((setup_camera,))
         .add_systems(
             (
@@ -88,6 +91,8 @@ fn main() {
             (
                 player_role_ui_system,
                 player_list_ui_system,
+                room_state_ui_system,
+                play_round_ui_system,
                 switch_player_role,
                 receive_room_info,
             )

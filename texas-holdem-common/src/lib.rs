@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{default, time::Duration};
 
 use bevy_renet::renet::{
     ChannelConfig, ReliableChannelConfig, RenetConnectionConfig, UnreliableChannelConfig,
@@ -64,12 +64,48 @@ pub struct RoomDTO {
     pub player_count: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+pub enum RoomState {
+    // 等待中
+    #[default]
+    Waiting,
+    // 游戏中
+    Playing,
+    // 暂停中
+    Paused,
+}
+
+impl RoomState {
+    pub fn name(&self) -> &'static str {
+        match self {
+            RoomState::Waiting => "Waiting",
+            RoomState::Playing => "Playing",
+            RoomState::Paused => "Paused",
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
 pub enum Round {
+    #[default]
+    Start,
     Preflop,
     Flop,
     Turn,
     River,
+    End,
+}
+impl Round {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Round::Start => "Start",
+            Round::Preflop => "Preflop",
+            Round::Flop => "Flop",
+            Round::Turn => "Turn",
+            Round::River => "River",
+            Round::End => "End",
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]

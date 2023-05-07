@@ -1,19 +1,19 @@
 # Texas Holdem 德州扑克
 - [x] 多房间支持
+- [x] 旁观者支持
 - [ ] 发牌动画
 - [ ] 翻牌动画
 - [ ] 多人联机（C/S + 状态同步）
 - [ ] 中途加入对局支持
 - [ ] 断线重连
 - [ ] AI托管
-- [ ] 旁观者支持
 - [ ] 数据持久化
 - [ ] 多server支持
 - [ ] 游戏UI
 - [ ] WASM支持
 
 ## 运行
-native
+本地
 ```
 cargo run --bin texas-holdem-server
 cargo run --bin texas-holdem-client
