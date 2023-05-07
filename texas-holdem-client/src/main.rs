@@ -1,15 +1,9 @@
-use std::{
-    net::UdpSocket,
-    time::{Duration, SystemTime},
-};
+use std::{net::UdpSocket, time::SystemTime};
 
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_renet::{
-    renet::{
-        ChannelConfig, ClientAuthentication, ReliableChannelConfig, RenetClient,
-        RenetConnectionConfig,
-    },
+    renet::{ClientAuthentication, RenetClient},
     RenetClientPlugin,
 };
 use lobby::{
@@ -18,7 +12,7 @@ use lobby::{
     RoomToEnter,
 };
 use network::{create_room, enter_room, switch_player_role};
-use room::{player_role_ui_system, setup_player_role_ui, CurrentRoomInfo, SwitchPlayerRoleEvent};
+use room::{player_role_ui_system, setup_room_ui, CurrentRoomInfo, SwitchPlayerRoleEvent};
 use texas_holdem_common::{connection_config, util::timestamp, PROTOCOL_ID};
 
 use crate::{
@@ -85,17 +79,9 @@ fn main() {
                 .in_set(OnUpdate(AppState::Lobby)),
         )
         .add_systems(
-            (setup_table, setup_one_card, setup_player_role_ui)
-                .in_schedule(OnEnter(AppState::Gaming)),
+            (setup_table, setup_one_card, setup_room_ui).in_schedule(OnEnter(AppState::Gaming)),
         )
-        .add_systems(
-            (
-                player_role_ui_system,
-                player_role_ui_system,
-                switch_player_role,
-            )
-                .in_set(OnUpdate(AppState::Gaming)),
-        )
+        .add_systems((player_role_ui_system, switch_player_role).in_set(OnUpdate(AppState::Gaming)))
         .run();
 }
 
