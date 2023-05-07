@@ -1,4 +1,4 @@
-use crate::{Player, PlayerRole, RoomDTO, RoomState};
+use crate::{Player, PlayerRole, RoomDTO, RoomState, Round};
 use serde::{Deserialize, Serialize};
 
 // 获取房间列表
@@ -13,6 +13,8 @@ pub const SWITCH_PLAYER_ROLE_CHANNEL_ID: u8 = 3;
 pub const BROADCAST_ROOM_INFO_CHANNEL_ID: u8 = 4;
 // 设置房间状态
 pub const SET_ROOM_STATE_CHANNEL_ID: u8 = 5;
+// 对局信息
+pub const BROADCAST_PLAY_INFO_CHANNEL_ID: u8 = 6;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetRoomsMessage {
@@ -72,4 +74,13 @@ pub struct SetRoomStateMessage {
     pub target_room_state: RoomState,
     // resp
     pub success: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BroadcastPlayInfoMessage {
+    pub timestamp: u64,
+    pub room_id: u64,
+    pub play_id: u64,
+    pub round: Round,
+    pub participants: Vec<Player>,
 }

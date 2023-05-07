@@ -81,7 +81,7 @@ pub fn setup_room_ui(
                         justify_content: JustifyContent::SpaceBetween,
                         ..default()
                     },
-                    background_color: Color::BEIGE.into(),
+                    // background_color: Color::BEIGE.into(),
                     ..default()
                 })
                 .with_children(|parent| {
@@ -157,7 +157,7 @@ pub fn setup_room_ui(
                                     overflow: Overflow::Hidden,
                                     ..default()
                                 },
-                                background_color: Color::BLUE.into(),
+                                // background_color: Color::BLUE.into(),
                                 ..default()
                             },
                         ))
@@ -187,7 +187,7 @@ pub fn setup_room_ui(
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    background_color: Color::GRAY.into(),
+                    // background_color: Color::GRAY.into(),
                     ..default()
                 })
                 .with_children(|parent| {
@@ -262,7 +262,7 @@ pub fn setup_room_ui(
                         justify_content: JustifyContent::SpaceBetween,
                         ..default()
                     },
-                    background_color: Color::GREEN.into(),
+                    // background_color: Color::GREEN.into(),
                     ..default()
                 })
                 .with_children(|parent| {
@@ -273,7 +273,7 @@ pub fn setup_room_ui(
                             margin: UiRect::all(Val::Px(10.0)),
                             ..default()
                         },
-                        background_color: Color::AZURE.into(),
+                        // background_color: Color::AZURE.into(),
                         ..default()
                     });
                     // 玩家操作按键
@@ -286,7 +286,7 @@ pub fn setup_room_ui(
                                 margin: UiRect::all(Val::Px(10.0)),
                                 ..default()
                             },
-                            background_color: Color::FUCHSIA.into(),
+                            // background_color: Color::FUCHSIA.into(),
                             ..default()
                         })
                         .with_children(|parent| {

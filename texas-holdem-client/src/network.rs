@@ -2,16 +2,18 @@ use bevy::prelude::*;
 use bevy_renet::renet::RenetClient;
 use texas_holdem_common::{
     channel::{
-        BroadcastRoomInfoMessage, CreateRoomMessage, EnterRoomMessage, GetRoomsMessage,
-        SetRoomStateMessage, SwitchPlayerRoleMessage, BROADCAST_ROOM_INFO_CHANNEL_ID,
-        CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID,
-        SET_ROOM_STATE_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
+        BroadcastPlayInfoMessage, BroadcastRoomInfoMessage, CreateRoomMessage, EnterRoomMessage,
+        GetRoomsMessage, SetRoomStateMessage, SwitchPlayerRoleMessage,
+        BROADCAST_PLAY_INFO_CHANNEL_ID, BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID,
+        ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID, SET_ROOM_STATE_CHANNEL_ID,
+        SWITCH_PLAYER_ROLE_CHANNEL_ID,
     },
     util::timestamp,
 };
 
 use crate::{
     lobby::{CreateRoomEvent, EnterRoomEvent, NewRoomSettings, PlayerName, RoomList},
+    play::CurrentPlayInfo,
     room::{CurrentRoomInfo, SetRoomStateEvent, SwitchPlayerRoleEvent},
     AppState,
 };
@@ -194,6 +196,24 @@ pub fn set_room_state(
             if message.timestamp == *last_timestamp && message.success {
                 info!("Received set room state message: {:?}", message);
                 current_room_info.room_state = message.target_room_state;
+            }
+        }
+    }
+}
+
+pub fn receive_play_info(
+    mut client: ResMut<RenetClient>,
+    mut last_timestamp: Local<u64>,
+    mut current_play_info: ResMut<CurrentPlayInfo>,
+) {
+    while let Some(message) = client.receive_message(BROADCAST_PLAY_INFO_CHANNEL_ID) {
+        if let Ok(message) = serde_json::from_slice::<BroadcastPlayInfoMessage>(&message) {
+            if message.timestamp > *last_timestamp {
+                info!("Received play info message: {:?}", message);
+                current_play_info.play_id = Some(message.play_id);
+                current_play_info.round = message.round;
+                current_play_info.participants = message.participants;
+                *last_timestamp = message.timestamp;
             }
         }
     }

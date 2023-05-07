@@ -6,7 +6,7 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 use lobby::{handle_create_room, handle_enter_room, handle_get_rooms};
-use play::PlayList;
+use play::{broadcast_play_info, process_play_round_start, start_new_play, PlayList};
 use room::{broadcast_room_info, handle_set_room_state, handle_switch_player_role};
 use texas_holdem_common::{connection_config, PROTOCOL_ID};
 
@@ -44,6 +44,9 @@ fn main() {
             broadcast_room_info,
             handle_set_room_state,
             handle_events_system,
+            broadcast_play_info,
+            start_new_play,
+            process_play_round_start,
         ))
         .run();
 }

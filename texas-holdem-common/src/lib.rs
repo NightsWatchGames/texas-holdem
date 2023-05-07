@@ -4,8 +4,9 @@ use bevy_renet::renet::{
     ChannelConfig, ReliableChannelConfig, RenetConnectionConfig, UnreliableChannelConfig,
 };
 use channel::{
-    BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID, ENTER_ROOT_CHANNEL_ID,
-    GET_ROOMS_CHANNEL_ID, SET_ROOM_STATE_CHANNEL_ID, SWITCH_PLAYER_ROLE_CHANNEL_ID,
+    BROADCAST_PLAY_INFO_CHANNEL_ID, BROADCAST_ROOM_INFO_CHANNEL_ID, CREATE_ROOM_CHANNEL_ID,
+    ENTER_ROOT_CHANNEL_ID, GET_ROOMS_CHANNEL_ID, SET_ROOM_STATE_CHANNEL_ID,
+    SWITCH_PLAYER_ROLE_CHANNEL_ID,
 };
 use serde::{Deserialize, Serialize};
 
@@ -40,6 +41,10 @@ pub fn connection_config() -> RenetConnectionConfig {
             channel_id: SET_ROOM_STATE_CHANNEL_ID,
             ..Default::default()
         }),
+        ChannelConfig::Unreliable(UnreliableChannelConfig {
+            channel_id: BROADCAST_PLAY_INFO_CHANNEL_ID,
+            ..Default::default()
+        }),
     ];
 
     RenetConnectionConfig {
@@ -70,7 +75,7 @@ pub struct RoomDTO {
     pub player_count: u32,
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RoomState {
     // 等待中
     #[default]
@@ -91,7 +96,7 @@ impl RoomState {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Round {
     #[default]
     Start,
@@ -99,6 +104,8 @@ pub enum Round {
     Flop,
     Turn,
     River,
+    // 比较大小
+    // 分钱
     End,
 }
 impl Round {
@@ -114,7 +121,7 @@ impl Round {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerRole {
     // 旁观者
     #[default]

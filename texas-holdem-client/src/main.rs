@@ -11,7 +11,10 @@ use lobby::{
     CreateRoomEvent, EnterRoomEvent, InputPasswordModalOpen, NewRoomSettings, PlayerName, RoomList,
     RoomToEnter,
 };
-use network::{create_room, enter_room, receive_room_info, set_room_state, switch_player_role};
+use network::{
+    create_room, enter_room, receive_play_info, receive_room_info, set_room_state,
+    switch_player_role,
+};
 use play::CurrentPlayInfo;
 use room::{
     play_round_ui_system, player_list_ui_system, player_role_ui_system, room_state_ui_system,
@@ -99,6 +102,7 @@ fn main() {
                 switch_player_role,
                 receive_room_info,
                 set_room_state,
+                receive_play_info,
             )
                 .in_set(OnUpdate(AppState::Gaming)),
         )
