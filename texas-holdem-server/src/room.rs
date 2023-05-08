@@ -17,6 +17,7 @@ pub struct Room {
     pub room_state: RoomState,
     pub owner_name: String,
     pub players: Vec<Player>,
+    pub last_dealer_name: Option<String>,
 }
 impl Room {
     pub fn contains_player(&self, player_name: &str) -> bool {

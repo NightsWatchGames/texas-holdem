@@ -53,7 +53,9 @@ pub fn handle_create_room(mut server: ResMut<RenetServer>, mut room_list: ResMut
                         player_client_id: client_id,
                         player_name: message.player_name.clone(),
                         player_role: PlayerRole::Spectator,
+                        chips: 0,
                     }],
+                    last_dealer_name: None,
                 });
                 server.send_message(
                     client_id,
@@ -75,6 +77,7 @@ pub fn handle_enter_room(mut server: ResMut<RenetServer>, mut room_list: ResMut<
                     .iter_mut()
                     .find(|room| room.room_id == message.room_id)
                 {
+                    // 同一房间内不允许重名
                     if room.room_password == message.room_password
                         && !room.contains_player(&message.player_name)
                     {
@@ -82,6 +85,8 @@ pub fn handle_enter_room(mut server: ResMut<RenetServer>, mut room_list: ResMut<
                             player_client_id: client_id,
                             player_name: message.player_name.clone(),
                             player_role: PlayerRole::Spectator,
+                            // TODO 断线重连
+                            chips: 0,
                         });
                         message.success = true;
                     } else {
